@@ -31,7 +31,7 @@ def leaky_relu_backward(dA, Z, alpha=0.01):
     dZ[Z <= 0] = alpha;
     return dZ;
 
-def initialize_parameters_deep(layer_dims, seed, weight_multiplier=0.1, weight_addition=0):
+def initialize_parameters_deep(layer_dims, seed, weights=None, weight_multiplier=0.1, weight_addition=0):
     """
     Arguments:
     layer_dims -- python array (list) containing the dimensions of each layer in our network
@@ -44,10 +44,16 @@ def initialize_parameters_deep(layer_dims, seed, weight_multiplier=0.1, weight_a
     np.random.seed(seed)
     parameters = {}
     L = len(layer_dims)            # number of layers in the network
-
-    for l in range(1, L):
-        parameters[f'W{l}'] = np.random.randn(layer_dims[l], layer_dims[l-1])*weight_multiplier + weight_addition
-        parameters[f'b{l}'] = np.zeros((layer_dims[l], 1))
+    
+    if weights is None:
+        for l in range(1, L):
+            parameters[f'W{l}'] = np.random.randn(layer_dims[l], layer_dims[l-1])*weight_multiplier + weight_addition
+            parameters[f'b{l}'] = np.zeros((layer_dims[l], 1))
+    else:
+        for l in range(1, L):
+            parameters[f'W{l}'] = np.array(weights[l-1][:, 1:])
+            parameters[f'b{l}'] = np.array(weights[l-1][:, 0]).reshape(-1, 1)
+    
     return parameters
 
 
@@ -254,12 +260,12 @@ def classify(activations):
 
 
 class MyNetwork:
-    def __init__(self, dim_list, seed, weight_multiplier=0.1, hidden_act='relu', weight_addition=0):
+    def __init__(self, dim_list, seed=0, weights=None, weight_multiplier=0.1, hidden_act='relu', weight_addition=0):
         self.seed = seed
         self.hidden_act = hidden_act
-        self.parameters = initialize_parameters_deep(dim_list, seed, weight_multiplier=weight_multiplier, weight_addition=weight_addition)
+        self.parameters = initialize_parameters_deep(dim_list, seed, weights=weights, weight_multiplier=weight_multiplier, weight_addition=weight_addition)
 
-    def fit(self, X, Y, learning_rate=0.0075, num_iterations=3000, criterion='entropy', print_cost=False):
+    def fit(self, X, Y, learning_rate=0.0075, num_iterations=3000, criterion='entropy', print_cost=False, plot_costs=True):
         entropy_costs = []
         misclass = []
         mses = []
@@ -287,21 +293,23 @@ class MyNetwork:
             
             misclass.append(compute_class_error(AL, Y)/X.shape[1])
 
-        # plot the cost
-        plt.plot(np.squeeze(entropy_costs), label='Entropy')
-        plt.plot(np.squeeze(misclass), label='% of Misclassifications')
-        plt.plot(np.squeeze(mses), label='MSE')
-        plt.ylabel('Cost')
-        plt.xlabel('Iterations')
-        plt.title(f"activation={self.hidden_act}, lr={learning_rate}, num_iter={num_iterations}, seed={self.seed}")
-        plt.legend()
-        plt.savefig(f'imgs/error_act{self.hidden_act}_seed{self.seed}')
-        plt.show()
+        if plot_costs:
+            # plot the cost
+            plt.plot(np.squeeze(entropy_costs), label='Entropy')
+            plt.plot(np.squeeze(misclass), label='% of Misclassifications')
+            plt.plot(np.squeeze(mses), label='MSE')
+            plt.ylabel('Cost')
+            plt.xlabel('Iterations')
+            plt.title(f"activation={self.hidden_act}, lr={learning_rate}, num_iter={num_iterations}, seed={self.seed}")
+            plt.legend()
+            plt.savefig(f'imgs/error_act{self.hidden_act}_seed{self.seed}')
+            plt.show()
     
         print('Training results:')
         print(f'Cross-Entropy: {entropy_costs[-1]}')
         print(f'MSE: {mses[-1]}')
         print(f'Misclassification count: {int(misclass[-1] * X.shape[1])}/{X.shape[1]}')
+        print()
         
         return entropy_costs[-1], mses[-1], misclass[-1]
         
