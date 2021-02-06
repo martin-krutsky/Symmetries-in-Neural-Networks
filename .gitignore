@@ -1,8 +1,9 @@
 .ipynb_checkpoints/
 .idea/
 __pycache__/
+*.pyc
+
+old_ntbs/
 
 *.npy
 *.npz
-
-old_ntbs/
