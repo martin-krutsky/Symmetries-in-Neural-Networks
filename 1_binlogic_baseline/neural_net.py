@@ -1,5 +1,4 @@
 import numpy as np
-import h5py
 import matplotlib.pyplot as plt
 
 
@@ -30,6 +29,7 @@ def leaky_relu_backward(dA, Z, alpha=0.01):
     dZ = np.array(dA, copy = True)
     dZ[Z <= 0] = alpha;
     return dZ;
+
 
 def initialize_parameters_deep(layer_dims, seed, weights=None, weight_multiplier=0.1, weight_addition=0):
     """
@@ -320,9 +320,8 @@ class MyNetwork:
         return predictions
     
     def score(self, AL, Y):
-        cross_entropy = compute_cost(AL, Y)
+        cross_entropy = compute_cost_entropy(AL, Y)
         print('Training results:')
         print(f'Cross-Entropy: {cross_entropy}')
         print(f'MSE: {compute_cost_mse(AL, Y)}')
         print(f'Misclassification count: {compute_class_error(AL, Y)}/{X.shape[1]}') 
-    
